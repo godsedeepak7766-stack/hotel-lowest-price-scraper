@@ -5,7 +5,22 @@ Scrapes Booking.com to:
 1. Find a **5-star** hotel in a given city and pick the **highest-rated** result (by review score, then review count).
 2. Search **future 5-night** date windows **within the current calendar year** (sampled dates) and return the **lowest total price** found in **INR** for **2 adults + 1 infant (age 0)**.
 
-> Note: Some travel sites may present bot checks/CAPTCHA depending on your network/environment. This project includes a **headed mode** to help when that happens.
+## Industry-standard Playwright layout (good for interviews)
+
+This repo follows the setup most teams use:
+
+- **`@playwright/test`** — official test runner, reports, trace, CI hooks  
+- **`playwright.config.js`** — timeouts, browser project (`chromium`), reporters  
+- **`tests/*.spec.js`** — specs call a stable domain flow  
+- **`page-objects/`** — **Page Object Model** (selectors + actions per page)  
+- **`lib/`** — URL builders, date sampling, navigation helpers shared by tests + CLI  
+
+The **same scraping logic** runs in:
+
+- `npm test` (Playwright Test — what you’d show in an interview)
+- `npm start` (plain Node + `playwright` — optional convenience CLI)
+
+> Note: Some travel sites may present bot checks/CAPTCHA depending on your network/environment. Use **headed** mode when that happens.
 
 ## Requirements
 
@@ -19,7 +34,41 @@ npm install
 npm run install:browsers
 ```
 
-## Run
+## Run (recommended): Playwright Test
+
+Default city is **Mumbai**; override with `CITY`:
+
+**Windows (PowerShell)**
+
+```powershell
+$env:CITY="Mumbai"; $env:MAX_SAMPLES="2"; npm test
+```
+
+**macOS / Linux**
+
+```bash
+CITY=Mumbai MAX_SAMPLES=2 npm test
+```
+
+Headed browser:
+
+```bash
+npx playwright test --headed
+```
+
+Interactive UI mode:
+
+```bash
+npm run test:ui
+```
+
+After a run, open the HTML report:
+
+```bash
+npx playwright show-report
+```
+
+## Run (optional): Node CLI
 
 ### Headless (default)
 
@@ -27,18 +76,16 @@ npm run install:browsers
 npm start -- --city "Mumbai"
 ```
 
-### Headed (useful if you hit bot checks)
+### Headed (PowerShell)
 
-```bash
-npm run start:headed -- --city "Mumbai"
+```powershell
+$env:PW_HEADLESS="false"; node src/index.js --city "Mumbai" --headed true
 ```
 
 ### Optional flags
 
-- `--maxSamples <n>`: limit how many check-in dates are tried (useful for quick runs)
+- `--maxSamples <n>`: limit how many check-in dates are tried
 - `--timeoutMs <ms>`: increase timeouts if pages are slow
-
-Example:
 
 ```bash
 npm start -- --city "Mumbai" --maxSamples 12 --timeoutMs 120000
@@ -46,18 +93,15 @@ npm start -- --city "Mumbai" --maxSamples 12 --timeoutMs 120000
 
 ## Output
 
-The script prints JSON to stdout, e.g.
+- Tests print JSON via `console.log` and use `expect()` for basic assertions.
+- CLI prints JSON to stdout.
 
-- `hotelName`, `hotelUrl`, `reviewScore`, `reviewCount`
-- `bestPrice` with `checkIn`, `checkOut`, `totalPrice` (INR) and `approxNightlyPrice`
-- `sampledCheckInDates` used for the search
-- `notes` for bot-check detection or parsing issues
+Fields include `hotelName`, `hotelUrl`, `reviewScore`, `bestPrice` (INR total), `sampledCheckInDates`, and `notes`.
 
-## Design notes (matches assignment constraints)
+## Design notes (assignment constraints)
 
-- **Programming language**: JavaScript (Node.js)
-- **Target platform**: Web scraper (Playwright browser automation)
+- **Language**: JavaScript (Node.js)
+- **Automation**: Playwright (`@playwright/test` + Page Objects)
 - **Rating reference**: Booking.com review score on search results
-- **Currency**: INR (`selected_currency=INR` + INR parsing)
-- **Scope**: Single site scraping (no extension crawling)
-
+- **Currency**: INR (`selected_currency=INR` + guarded INR parsing)
+- **Scope**: Single-site flow (no broad crawling)

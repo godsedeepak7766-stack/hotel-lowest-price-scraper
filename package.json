@@ -1,9 +1,12 @@
 {
   "name": "hotel-lowest-price-scraper",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Booking.com scraper using Playwright Test + Page Object Model",
+  "main": "src/index.js",
   "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:ui": "playwright test --ui",
     "start": "node src/index.js",
     "start:headed": "set PW_HEADLESS=false&& node src/index.js --headed true",
     "install:browsers": "playwright install chromium"
@@ -13,5 +16,8 @@
   "license": "ISC",
   "dependencies": {
     "playwright": "^1.59.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.59.1"
   }
 }

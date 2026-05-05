@@ -1,5 +1,6 @@
-const { runBookingScrape } = require("./booking");
-const { getArgValue, mustGetArgValue } = require("./utils");
+const { chromium } = require("playwright");
+const { scrapeBookingLowestPrice } = require("../lib/scrape-booking");
+const { getArgValue, mustGetArgValue } = require("../utils/args");
 
 async function main() {
   const argv = process.argv.slice(2);
@@ -12,8 +13,27 @@ async function main() {
   const timeoutMsRaw = getArgValue(argv, "timeoutMs");
   const timeoutMs = timeoutMsRaw ? Number(timeoutMsRaw) : 180_000;
 
-  const result = await runBookingScrape(city, { headless, maxSamples, timeoutMs });
-  process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
+  const browser = await chromium.launch({
+    headless,
+    args: ["--disable-blink-features=AutomationControlled"],
+  });
+  try {
+    const context = await browser.newContext({
+      locale: "en-IN",
+      userAgent:
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+    });
+    const page = await context.newPage();
+    const result = await scrapeBookingLowestPrice(page, {
+      city,
+      maxSamples,
+      timeoutMs,
+      log: (m) => process.stderr.write(`[scrape] ${m}\n`),
+    });
+    process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
+  } finally {
+    await browser.close().catch(() => undefined);
+  }
 }
 
 main().catch((err) => {
@@ -21,4 +41,3 @@ main().catch((err) => {
   process.stderr.write(`${msg}\n`);
   process.exit(1);
 });
-
